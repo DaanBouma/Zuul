@@ -19,7 +19,7 @@ namespace Zuul.src
 
         public bool hasStarted = false;
         public int attacks = 0;
-        public int health = 10;
+        public int health = 500;
 
         public string getHealth()
         {

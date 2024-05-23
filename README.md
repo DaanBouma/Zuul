@@ -4,4 +4,5 @@ was even more boring then playing it.
 
 ## Requirements to play
 
-#1 
+#1 Have the dotnet 8 installation 
+-- 

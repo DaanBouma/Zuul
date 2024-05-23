@@ -2,7 +2,8 @@
     using System.Collections;
     using System.Collections.Generic;
     using System.Reflection;
-    using Zuul.src;
+using System.Security.Cryptography.X509Certificates;
+using Zuul.src;
 
 
     class Game
@@ -11,7 +12,6 @@
         private Bossbattle bossbattle;
         private Parser parser;
         private Room currentRoom;
-        private Printer printer;
         private Inventory inventory;
         private List<string> chests;
         private Random random;
@@ -23,14 +23,14 @@
             chests = new List<string>();
             bossbattle = new Bossbattle();
             playerInventory = new Inventory();
-            printer = new Printer();
             parser = new Parser();
             inventory = new Inventory();
             random = new Random();
             CreateRooms();
         }
-        bool finished = false;
-    bool wantToQuit = false;
+    public bool quiting = false;
+        public bool finished = false;
+    public bool wantToQuit = false;
     private void CreateRooms()
         {
             Room outside = new Room("outside the main entrance of the university");
@@ -107,7 +107,7 @@
         chests.Add("sword");
         chests.Add("katana");
         chests.Add("longsword");
-        chests.Add("spear");
+       chests.Add("spear");
     }
 
 
@@ -124,25 +124,36 @@
 
 
 public void Play()
-        {
-            PrintWelcome();
-            while (!finished)
-            {
-                Command command = parser.GetCommand();
-                finished = ProcessCommand(command);
-            }
 
-            printer.ThanksForPlaying();
-            console.await();
+        {
+        PrintWelcome();
+        while (!finished)
+        {
+            Command command = parser.GetCommand();
+            finished = ProcessCommand(command);
+
+            if (finished == true)
+           {
+                break;
+            }
         }
+
+        ThanksForPlaying();
+        console.await();
+    }
 
         private void PrintWelcome()
         {
-            printer.WelcomeMessage();
-            printer.FirstDirection();
-            System.Console.WriteLine(currentRoom.GetLongDescription3());
-        console.changeConsoleColor("red");
-        console.nextline();
+        console.WriteCharacter("logo", "blue", "=");
+        console.WriteCharacter("fullLine", "blue", "_");
+        console.Writeline("Welcome to the most boring game ever!", "white", "");
+        console.Writeline("Use Commands such as 'Go' and 'Use' to do certain things in the game.", "white", "");
+        console.Writeline("Move Rooms, Pickup Items but most of all. Escape the School by fighting its villain!", "white", "");
+        console.WriteDouble("See the Commands by typing ", "'help'", "white", "blue", "");
+        console.WriteCharacter("fullLine", "blue", "=");
+        console.WriteDouble("You are In the", " Detention Room ", "white", "blue", "");
+        console.Writeline("The Teacher said she would come back but it is already 7PM. Maybe it is time to go home.", "white", "");
+        console.Writeline(currentRoom.GetLongDescription3(), "blue", "=");
         }
 
         private bool ProcessCommand(Command command)
@@ -152,7 +163,7 @@ public void Play()
             if (command.IsUnknown())
             {
 
-                printer.IDontKnowWhatYouMean();
+                IDontKnowWhatYouMean();
                 return wantToQuit;
             }
 
@@ -194,13 +205,36 @@ public void Play()
                  case "stats":
                 weaponstats(command);
                 break;
+            case "weight":
+                console.WriteDouble("playerinventory: ", playerInventory.weight.ToString(), "white", "red", "-");
+                console.WriteDouble("inventory: ", inventory.weight.ToString(), "white", "red", "_");
+                break;
 
 
-            }
-
+        }
+        bool shouldstop = stopGameCheck();
+        wantToQuit = shouldstop;
             return wantToQuit;
         }
-
+    public bool stopGameCheck()
+    {
+        if (quiting == true)
+        {
+            return true;
+        }
+        return false;
+    }
+    public void IDontKnowWhatYouMean()
+    {
+        console.Writeline("I Don't know what you mean!", "blue", "=");
+    }
+    public void ThanksForPlaying()
+    {
+        console.WriteCharacter("fullLine", "blue", "=");
+        console.Writeline("Thank you for playing.", "white", "");
+        console.WriteTriple("Press", " [Enter] ", "to continue.", "white", "blue", "white", "");
+        console.WriteCharacter("fullLine", "blue", "=");
+    }
     private void attack(Command command)
     {
         if (!command.HasSecondWord())
@@ -246,7 +280,7 @@ public void Play()
             } else if (itemName == "spear")
             {
                 bossbattle.removeHealth(amount: 20);
-                console.Writeline("You used a longsword and attack the boss... ", "blue", "-");
+                console.Writeline("You used a spear and attack the boss... ", "blue", "-");
                 console.Writeline("He has lost 20 health.", "blue", "");
                 console.WriteDouble("Remaining health: ", bossbattle.getHealth(), "blue", "white", "_");
                 count();
@@ -459,8 +493,13 @@ public void Play()
         }
         private void PrintHelp()
 		    {
-		    printer.HelpInformation();
-		    }
+        console.WriteCharacter("fullLine", "blue", "=");
+        console.Writeline("You are lost. You are alone.", "white", "");
+        console.Writeline("You wander around at the university.", "white", "");
+        console.WriteCharacter("fullLine", "blue", "=");
+        parser.PrintValidCommands();
+        console.WriteCharacter("fullLine", "blue", "=");
+    }
 		    private void TakeItem(Command command)
 		    {
 			    if (!command.HasSecondWord())
@@ -473,7 +512,7 @@ public void Play()
 
 			    if (currentRoom.HasItem(itemName))
 			    {
-			    if (inventory.CheckWeight(itemName) == true)
+			    if (playerInventory.CheckWeight(itemName) == true)
 			    {
                     playerInventory.AddItem(itemName);
                     currentRoom.RemoveItem(itemName);
@@ -495,7 +534,6 @@ public void Play()
             if (!command.HasSecondWord())
             {
                 console.Writeline("Drop what?", "blue", "=");
-                printer.switchColor("red");
                 return;
             }
 
@@ -526,7 +564,7 @@ public void Play()
             console.Writeline("Weight: " + playerInventory.weight + "kg / " + playerInventory.maxWeight + "kg", "white", "");
 		    console.Writeline("Health: " + playerInventory.health + " / 100", "white", "");
 		    console.Writeline("Energy: " + playerInventory.energy + "%", "white", "");
-            printer.switchColor("blue");
+        console.changeConsoleColor("blue");
         console.WriteCharacter("halfLine", "blue", "=");
         if (playerInventory.inventoryDescription() == "")
 		    {
@@ -539,13 +577,27 @@ public void Play()
     }
 
 
+    private void playerLose(string deathReason)
+    {
+        console.WriteCharacter("fullLine", "blue", "=");
+        console.WriteCharacter("lose", "blue", "");
+        console.WriteCharacter("fullLine", "blue", "=");
 
+        if (deathReason == "energy")
+        {
+            console.WriteDouble("You couldnt go further because you didnt have enough", " energy", "white", "red", "=");
+        }
+        else if (deathReason == "health")
+        {
+            console.WriteDouble("You couldnt go further because you didnt have enough", " health", "white", "red", "=");
+        }
+        quiting = true;
+    }
     private void GoRoom(Command command)
     {
         if (!command.HasSecondWord())
         {
-            printer.gowhere();
-
+            console.Writeline("go Where?", "blue", "=");
             return;
         }
 
@@ -560,7 +612,7 @@ public void Play()
         }
         if (direction == "room" && inventory.hasUnlockBasement == false)
         {
-            printer.notUnlocked();
+            console.Writeline("It seems like it is looked. Maybe there is a key...", "blue", "=");
             return;
             {
 
@@ -569,7 +621,8 @@ public void Play()
 
         if (direction == "room" && inventory.hasConfirmed == false)
         {
-            printer.notConfirmed();
+            console.Writeline("After this point you can't go back. Do you want to proceed?", "white", "-");
+            console.WriteDouble("Write: ", "'go room'", "white", "red", "_");
             inventory.hasConfirmed = true;
             return;
         }
@@ -577,12 +630,23 @@ public void Play()
         {
             bossbattle.hasStarted = true;
             bossbattle.attacks = 0;
-            printer.battle();
+            console.nextline();
+            console.nextline();
+            console.WriteCharacter("fullLine", "blue", "=");
+            console.WriteCharacter("endboss", "blue", "");
+            console.WriteCharacter("fullLine", "blue", "=");
+            console.WriteDouble("You walk into the room. In horror you see ", "Micha", "white", "red", "_");
+            console.nextline();
+            console.Writeline("you wil begin with the attack. You will get 2 chances of commands. You can use the", "white", "=");
+            console.WriteTriple("'use'", " and ", "attack", "red", "white", "red", "_");
+            console.nextline(); 
+            console.Writeline("WE FIGHT TILL SOMEONE DIES....", "red", "=");
+            console.WriteCharacter("fullLine", "blue", "=");
             return;
         }
         if (direction == "office" && inventory.hasUnlockOffice == false)
         {
-            printer.notUnlocked();
+            console.Writeline("It seems like it is looked. Maybe there is a key...", "blue", "=");
             return;
         }
         if (playerInventory.energy > 5)
@@ -594,14 +658,16 @@ public void Play()
             console.Writeline(currentRoom.GetLongDescription(), "white", "");
             console.Writeline(currentRoom.GetExits(), "blue", "_");
             console.WriteCharacter("fullLine", "blue", "=");
-        }
-        else
+            return;
+        } else
         {
-            printer.lose("energy");
-            wantToQuit = true;
-            finished = true;
+            playerLose("energy");
+
         }
+            
+
     }
+    
     public void victory()
     {
         console.WriteCharacter("fullLine", "blue", "=");
@@ -636,7 +702,13 @@ public void Play()
         console.WriteCharacter("fullLine", "blue", "=");
 
         playerInventory.removeHealth(amount: 20);
-        
+        if (playerInventory.health <= 0)
+        {
+            playerLose(deathReason: "health");
+        } else if (playerInventory.energy <= 0)
+        {
+            playerLose(deathReason: "energy");
+        }
     }
 
     private void AttackOption2()
@@ -647,6 +719,14 @@ public void Play()
         console.WriteCharacter("fullLine", "blue", "=");
 
         playerInventory.removeEnergy(amount: 15);
+        if (playerInventory.health <= 0)
+        {
+            playerLose(deathReason: "health");
+        }
+        else if (playerInventory.energy <= 0)
+        {
+            playerLose(deathReason: "energy");
+        }
     }
 
     private void AttackOption3()
@@ -657,6 +737,14 @@ public void Play()
         console.WriteCharacter("fullLine", "blue", "=");
         playerInventory.removeHealth(amount: 15);
         playerInventory.removeEnergy(amount: 15);
+        if (playerInventory.health <= 0)
+        {
+            playerLose(deathReason: "health");
+        }
+        else if (playerInventory.energy <= 0)
+        {
+            playerLose(deathReason: "energy");
+        }
     }
 
     private void AttackOption4()
@@ -666,6 +754,14 @@ public void Play()
         console.Writeline("you lost 20 health.", "white", "_");
         console.WriteCharacter("fullLine", "blue", "=");
         playerInventory.removeHealth(amount: 20);
+        if (playerInventory.health <= 0)
+        {
+            playerLose(deathReason: "health");
+        }
+        else if (playerInventory.energy <= 0)
+        {
+            playerLose(deathReason: "energy");
+        }
     }
 
     private void AttackOption5()
@@ -675,6 +771,14 @@ public void Play()
         console.Writeline("you lost 20 health. And your Phone", "white", "_");
         console.WriteCharacter("fullLine", "blue", "=");
         playerInventory.removeHealth(amount: 20);
+        if (playerInventory.health <= 0)
+        {
+            playerLose(deathReason: "health");
+        }
+        else if (playerInventory.energy <= 0)
+        {
+            playerLose(deathReason: "energy");
+        }
     }
 
     private void AttackOption6()
@@ -684,6 +788,14 @@ public void Play()
         console.Writeline("you lost 80 health.", "white", "_");
         console.WriteCharacter("fullLine", "blue", "=");
         playerInventory.removeHealth(amount: 80);
+        if (playerInventory.health <= 0)
+        {
+            playerLose(deathReason: "health");
+        }
+        else if (playerInventory.energy <= 0)
+        {
+            playerLose(deathReason: "energy");
+        }
     }
 
     private void AttackOption7()
@@ -693,5 +805,13 @@ public void Play()
         console.Writeline("you lost 50 Energy.", "white", "_");
         console.WriteCharacter("fullLine", "blue", "=");
         playerInventory.removeEnergy(amount: 50);
+        if (playerInventory.health <= 0)
+        {
+            playerLose(deathReason: "health");
+        }
+        else if (playerInventory.energy <= 0)
+        {
+            playerLose(deathReason: "energy");
+        }
     }
 }

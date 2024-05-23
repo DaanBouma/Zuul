@@ -11,7 +11,6 @@ namespace Zuul.src
     public class Inventory
 
     {
-        private Printer printer;
         public List<string> items;
         public int weight {  get; set; } = 0;
         public int maxWeight { get; } = 20;
@@ -20,35 +19,26 @@ namespace Zuul.src
 
         public bool hasConfirmed = false;
         public bool hasUnlockBasement = false;
-        public bool hasUnlockOffice = true;
+        public bool hasUnlockOffice = false;
         public Inventory()
         {
-            printer = new Printer();
             items = new List<string>();
         }
 
         public void removeHealth(int amount)
         {
             health -= amount;
-            if (health <= 0)
-            {
-                printer.lose("health");
-            }
+
         }
         public void removeEnergy(int amount)
         {
              energy -= amount;
-            if (energy <= 0)
-            {
-                printer.lose("energy");
-            }
         }
         public bool CheckWeight(string item)
         {
             int itemWeight = getItemWeight(item);
             if ((itemWeight + weight) < maxWeight)
             {
-                AddWeight(item);
                 return true;
             } else
             {
@@ -103,17 +93,14 @@ namespace Zuul.src
         public void RemoveWeight(string item)
         {
             int itemWeight = getItemWeight(item);
-            System.Console.WriteLine("formule: " + (weight -= itemWeight));
             weight -= itemWeight;
 
         }
         
         public void RemoveItem(string item)
         {
-            //RemoveWeight(item);
+            RemoveWeight(item);
             items.Remove(item);
-            int itemWeight = getItemWeight(item);
-            weight -= itemWeight;
         }
 
         public bool HasItem(string item)

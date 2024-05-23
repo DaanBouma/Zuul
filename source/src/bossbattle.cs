@@ -10,11 +10,9 @@ namespace Zuul.src
     class Bossbattle
     {
         Random random;
-        Printer printer;
         public Bossbattle()
         {
             random = new Random();
-            printer = new Printer();
         }
 
         public bool hasStarted = false;

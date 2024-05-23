@@ -19,6 +19,7 @@ class CommandLibrary
         validCommands.Add("open");
         validCommands.Add("attack");
         validCommands.Add("stats");
+        validCommands.Add("weight");
     }
 	public bool IsValidCommandWord(string instring)
 	{
